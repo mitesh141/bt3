@@ -1,37 +1,45 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.7.0 <0.9.0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.7.0 <0.9.0; 
 
-contract MyBank {
-    mapping(address => uint256) private _balances;
-    address public owner;
-    event LogDepositeMade(address accountHoder, uint256 amount);
+contract Bank {
 
-    constructor() public {
-        owner = msg.sender;
-        emit LogDepositeMade(msg.sender, 1000);
-    }
+        address public owner; 
 
-    function deposite() public payable returns (uint256) {
-        require(
-            (_balances[msg.sender] + msg.value) > _balances[msg.sender] &&
-                msg.sender != address(0)
-        );
-        _balances[msg.sender] += msg.value;
-        emit LogDepositeMade(msg.sender, msg.value);
-        return _balances[msg.sender];
-    }
+        mapping(address =>uint256) private userbalance;
+        
+        constructor() {
+            owner = msg.sender;
+        }
 
-    function withdraw(uint256 withdrawAmount) public returns (uint256) {
-        require(_balances[msg.sender] >= withdrawAmount);
-        require(msg.sender != address(0));
-        require(_balances[msg.sender] > 0);
-        _balances[msg.sender] -= withdrawAmount;
-        payable(msg.sender).transfer(withdrawAmount);
-        emit LogDepositeMade(msg.sender, withdrawAmount);
-        return _balances[msg.sender];
-    }
+        modifier onlyOwner(){
+            require (msg.sender==owner, 'You are not the owner of this contract');
+        _;
+        }
 
-    function viewBalance() public view returns (uint256) {
-        return _balances[msg.sender];
-    }
+        function deposit() public payable returns(bool) {
+            require(msg.value >10 wei, 'Please deposit at least 10 wei');
+            userbalance[msg.sender] +=msg.value;
+            return true;
+        }
+
+        function withdraw(uint256 _amount) public payable returns (bool) {
+            require(_amount <=userbalance[msg.sender], 'You dont have sufficient funds');
+            userbalance[msg.sender] -=_amount; 
+            payable(msg.sender).transfer(_amount);
+            return true;
+        }
+
+        function getbalance() public view returns(uint256){
+            return userbalance[msg.sender];
+        }
+
+        function getBankBalance() public view onlyOwner returns(uint256){
+            return address(this).balance;
+        }
+
+        function withdrawBankBalance (uint256 _amount) public payable onlyOwner returns (bool){
+             payable(owner).transfer (_amount);
+        return true;
+        }
+
 }
